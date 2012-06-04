@@ -1,0 +1,151 @@
+`sprockets-jsx` is a plugin that provides compile [JSX](https://github.com/jsx/JSX) files and serves it by [Sprockets](https://github.com/sstephenson/sprockets).
+
+# Install 
+
+    $ gem i sprockets-jsx
+
+# Usage
+
+    $ echo "sprockets-jsx" >> Gemfile
+    $ bundle install
+
+and configure as below:
+
+    Sprockets::JSXTemplate.configure do |conf|
+      # The compiler path. It should be executable
+      conf.jsx_bin = "/path/to/jsx"
+    
+      # JSX compile options such as "--optimize inline"
+      conf.compile_options = "--release"
+    
+      # JSX compiles to $__jsx_classMap = { "/fullpath/asset/foo.jsx": { .. }}
+      # and call it by `JSX.require("/fullpath/asset/foo.jsx")._Main.main$AS(args)`
+      # if conf.root is given as "/fullpath",  classMap will be transform to {"asset/foo.jsx"}
+      # then you can call it such as `JSX.require("asset/foo.jsx")._Main.main$AS(args)`
+      conf.root = "/path/to/asset_root"
+    end
+
+# Assets Integration
+
+    $ cd assets/javascripts
+    $ tree 
+    .
+    ├── app.js
+    ├── hello.jsx
+    └── test.js
+
+    $ cat app.js
+    //= require test
+    //= require hello
+    JSX.require("hello.jsx")._Main.main$AS();
+
+    $ cat test.js
+    var test = "this is test";
+
+    $ cat hello.jsx
+    class _Main {
+      static function main(args : string[]) :void {
+        log "Hello, world!";
+      }
+    }
+
+Visit the `/assets/app.js` with Sprockets proccessed, you'll get
+
+    var test = "this is test";
+    var JSX = {};
+    (function () {
+
+    /**
+     * copies the implementations from source interface to target
+     */
+    function $__jsx_merge_interface(target, source) {
+      for (var k in source.prototype)
+        if (source.prototype.hasOwnProperty(k))
+          target.prototype[k] = source.prototype[k];
+    }
+
+    /**
+     * defers the initialization of the property
+     */
+    function $__jsx_lazy_init(obj, prop, func) {
+      function reset(obj, prop, value) {
+        Object.defineProperty(obj, prop, {
+          value: value, 
+          enumerable: true,
+          writable: true,
+          configurable: true
+        });
+        return value;
+      }
+
+      Object.defineProperty(obj, prop, {
+        get: function () {
+          return reset(obj, prop, func());
+        },
+        set: function (v) {
+          reset(obj, prop, v);
+        },
+        enumerable: true,
+        configurable: true
+      });
+    }
+
+    /*
+     * global functions called by JSX as Number.* (renamed so that they do not conflict with local variable names)
+     */
+    var $__jsx_parseInt = parseInt;
+    var $__jsx_parseFloat = parseFloat;
+    var $__jsx_isNaN = isNaN;
+    var $__jsx_isFinite = isFinite;
+
+    var $__jsx_ObjectToString = Object.prototype.toString;
+    var $__jsx_ObjectHasOwnProperty = Object.prototype.hasOwnProperty;
+
+    /*
+     * public interface to JSX code
+     */
+    JSX.require = function (path) {
+      var m = $__jsx_classMap[path];
+      return m !== undefined ? m : null;
+    }
+    /**
+     * class _Main extends Object
+     * @constructor
+     */
+    function _Main() {
+    }
+
+    _Main.prototype = new Object;
+    /**
+     * @constructor
+     */
+    function _Main$() {
+    };
+
+    _Main$.prototype = new _Main;
+
+    /**
+     * @param {Array.<undefined|!string>} args
+     */
+    _Main.main$AS = function (args) {
+      console.log("Hello, world!");
+    };
+
+    _Main$main$AS = _Main.main$AS;
+
+    var $__jsx_classMap = {
+      "hello.jsx": {
+        _Main: _Main,
+        _Main$: _Main$
+      }
+    };
+
+
+    }());
+
+
+    JSX.require("hello.jsx")._Main.main$AS();
+
+
+    
+    
