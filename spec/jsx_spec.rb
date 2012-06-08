@@ -45,6 +45,7 @@ describe Sprockets::JSXTemplate do
     Sprockets::JSXTemplate.configure {|conf| conf.jsx_bin = "bar"}
     Sprockets::JSXTemplate.configure {|conf|}
     Sprockets::JSXTemplate::CONFIG.jsx_bin.should be_nil
+    Sprockets::JSXTemplate::CONFIG.compile_options.should be_nil
   end
 
   it "should be raise if invalid config method call" do

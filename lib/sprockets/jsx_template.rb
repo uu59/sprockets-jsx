@@ -30,7 +30,7 @@ module Sprockets
       content = begin
         %x"#{CONFIG.jsx_bin || ENV["JSX_BIN"] || "jsx"} #{options} #{filepath}"
       rescue Errno::ENOENT => e
-        raise Sprockets::ArgumentError.new e
+        raise Sprockets::ArgumentError.new %Q!Make sure your conf.jsx_bin or ENV["JSX_BIN"]. #{e.message}!
       end
 
       Dir.chdir(dir) if dir
